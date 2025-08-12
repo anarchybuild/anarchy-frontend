@@ -1,0 +1,5 @@
+project_id = "kzkdzvavqjdtomeqwlxn"
+
+# Make gasless-mint function public for wallet users
+[functions.gasless-mint]
+verify_jwt = false

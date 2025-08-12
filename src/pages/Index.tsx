@@ -1,0 +1,187 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Send } from 'lucide-react';
+import OptimizedNFTGrid from '@/components/nft/OptimizedNFTGrid';
+import { useDesigns } from '@/hooks/useQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useQuery';
+import { NFTGridSkeleton } from '@/components/common/SkeletonLoader';
+import { useToast } from '@/hooks/use-toast';
+import { useSecureAuth } from '@/hooks/useSecureAuth';
+import { useNFTMinting } from '@/hooks/useNFTMinting';
+import { createDesign } from '@/services/designService';
+import { preloadCriticalImages } from '@/utils/imagePreloader';
+const Index = () => {
+  const [prompt, setPrompt] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: ''
+  });
+  const [generating, setGenerating] = useState(false);
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    isSignedIn,
+    account
+  } = useSecureAuth();
+  const {
+    mintNFT
+  } = useNFTMinting();
+
+  // Get the profile to use the correct user ID for wallet users
+  const {
+    data: profile,
+    isLoading: profileLoading
+  } = useProfile(user?.id?.startsWith('0x') ? user.id : undefined);
+  const effectiveUserId = user?.id?.startsWith('0x') ? profile?.id : user?.id;
+
+  // For wallet users, wait until profile is loaded before fetching designs with user context
+  const shouldFetchWithUser = user?.id?.startsWith('0x') ? !profileLoading && profile?.id : true;
+
+  // Use optimized infinite query
+  const {
+    data,
+    isLoading: loading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useDesigns(shouldFetchWithUser ? effectiveUserId : undefined);
+  
+  // Flatten pages into single array
+  const nfts = data?.pages.flat() || [];
+  if (error) {
+    console.error('Error loading designs:', error);
+  }
+
+  // Preload critical images when NFTs are first loaded
+  useEffect(() => {
+    if (nfts.length > 0) {
+      const criticalImageUrls = nfts.slice(0, 2).map(nft => 
+        nft.seriesImages && nft.seriesImages.length > 0 
+          ? nft.seriesImages[0] 
+          : nft.imageUrl
+      ).filter(Boolean);
+      
+      preloadCriticalImages(criticalImageUrls, 2);
+    }
+  }, [nfts.length > 0]);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const {
+      name,
+      value
+    } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: "Missing prompt",
+        description: "Please enter a prompt to generate an image.",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (!isSignedIn || !account) {
+      toast({
+        title: "Authentication required",
+        description: "Please connect your wallet to generate and mint NFTs.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setGenerating(true);
+    try {
+      // Generate the image using the same API as the create page
+      const response = await fetch('https://kzkdzvavqjdtomeqwlxn.supabase.co/functions/v1/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6a2R6dmF2cWpkdG9tZXF3bHhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4OTY4NDgsImV4cCI6MjA1MjQ3Mjg0OH0.Y-h2taL-CQaF1WkOP_Dh9_ArOZH0CQTXgx-IpsvnGzg`
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          model: 'flux',
+          width: 1024,
+          height: 1024
+        })
+      });
+      const data = await response.json();
+      if (data.success && data.imageUrl) {
+        // Create design
+        const name = formData.name.trim() || 'Untitled Design';
+        const description = formData.description.trim() || prompt.trim();
+        const designData = {
+          name,
+          description,
+          image_url: data.imageUrl,
+          price: null,
+          license: null,
+          private: false,
+          series_id: null
+        };
+        const createdDesign = await createDesign(designData, account.address);
+        if (createdDesign) {
+          // Mint NFT using gasless minting
+          await mintNFT({
+            name,
+            description,
+            imageUrl: data.imageUrl,
+            creator: account.address
+          });
+          toast({
+            title: "Success!",
+            description: "Image generated and NFT minted successfully!"
+          });
+
+          // Reset form
+          setPrompt('');
+          setFormData({
+            name: '',
+            description: ''
+          });
+        } else {
+          throw new Error('Failed to create design');
+        }
+      } else {
+        throw new Error(data.error || 'Failed to generate image');
+      }
+    } catch (error: any) {
+      console.error('Error generating image:', error);
+      toast({
+        title: "Generation failed",
+        description: error.message || "Failed to generate image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+  return <div className="min-h-screen">
+      
+
+      {loading && nfts.length === 0 ? (
+        <NFTGridSkeleton />
+      ) : (
+        <OptimizedNFTGrid 
+          nfts={nfts} 
+          loading={loading}
+          hasNextPage={hasNextPage}
+          fetchNextPage={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+        />
+      )}
+    </div>;
+};
+export default Index;

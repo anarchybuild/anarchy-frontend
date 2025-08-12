@@ -1,0 +1,102 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.9%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom font for headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  /* Custom styling for NFT cards */
+  .nft-card {
+    @apply transition-all duration-300 hover:shadow-lg;
+    content-visibility: auto;
+    contain-intrinsic-size: 300px 400px;
+  }
+
+  /* Series grid specific styling */
+  .series-grid-container {
+    @apply w-full;
+    min-height: 200px; /* Ensure minimum height for series grids */
+  }
+
+  .series-grid-container .grid {
+    @apply grid-cols-2;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    height: 100%;
+  }
+
+  .series-grid-container .grid > div {
+    @apply aspect-square;
+    min-height: 0; /* Important for grid items */
+    min-width: 0; /* Important for grid items */
+  }
+
+  .anarchy-gradient {
+    @apply bg-gradient-to-b from-muted to-background;
+  }
+
+  /* Anarchy button style */
+  .btn-anarchy {
+    @apply border border-primary bg-background hover:bg-secondary text-primary px-4 py-2 rounded-md transition-colors;
+  }
+
+  .hover-effect {
+    @apply transition-transform duration-300 ease-in-out hover:scale-[1.02];
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
