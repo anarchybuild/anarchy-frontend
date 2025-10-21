@@ -5,6 +5,8 @@ export interface NFT {
   name: string;
   description: string;
   imageUrl: string;
+  thumbnailUrl?: string;
+  mediumUrl?: string;
   creator: string;
   owner: string;
   price: string;

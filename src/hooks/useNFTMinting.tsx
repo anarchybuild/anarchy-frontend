@@ -199,10 +199,6 @@ export const useNFTMinting = () => {
         throw new Error(data.error || 'Minting failed');
       }
 
-      toast({
-        title: "NFT Minted Successfully!",
-        description: `Your design has been minted as NFT (gasless)`,
-      });
 
       setClaimingStatus('');
       setMintingStatus('');

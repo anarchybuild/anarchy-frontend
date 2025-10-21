@@ -1,33 +1,14 @@
 
 import { ConnectButton } from 'thirdweb/react';
-import { inAppWallet, createWallet } from 'thirdweb/wallets';
 import { client } from '@/config/thirdweb';
+import { wallets } from '@/config/wallets';
 
 interface WalletButtonProps {
   className?: string;
   size?: "default" | "sm" | "lg" | "icon";
 }
 
-const wallets = [
-  inAppWallet({
-    auth: {
-      options: [
-        "x",
-        "facebook",
-        "telegram",
-        "discord",
-        "google",
-        "apple",
-        "email",
-      ],
-    },
-  }),
-  createWallet("io.metamask"),
-  createWallet("com.coinbase.wallet"),
-  createWallet("me.rainbow"),
-  createWallet("io.rabby"),
-  createWallet("io.zerion.wallet"),
-];
+// wallets imported from config
 
 const WalletButton = ({ className, size = "sm" }: WalletButtonProps) => {
   return (

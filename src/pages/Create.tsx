@@ -212,10 +212,6 @@ const Create = () => {
             console.log("🎉 NFT minting result:", nftResult);
             
             if (nftResult) {
-              toast({
-                title: "Creation Complete!",
-                description: `Design created and minted as NFT #${nftResult.tokenId}`
-              });
             } else {
               console.log("⚠️ NFT minting returned null/undefined");
               toast({
@@ -234,7 +230,6 @@ const Create = () => {
           }
 
           // Reset form
-          setPrompt('');
           setFormData({
             name: '',
             description: ''
@@ -421,7 +416,6 @@ const Create = () => {
 
       // Reset form only if not in series mode
       if (!currentSeries) {
-        setPrompt('');
         setFormData({
           name: '',
           description: ''

@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Bookmark, Plus, FolderPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +15,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { getUserCollections, addDesignToCollection, createCollection } from '@/services/collectionService';
 import { Collection } from '@/types/collection';
 import { getProfileByWallet } from '@/services/profileService';
+import { ConnectEmbed } from 'thirdweb/react';
+import { client } from '@/config/thirdweb';
+import { wallets } from '@/config/wallets';
 
 interface AddToCollectionButtonProps {
   designId: string;
@@ -33,6 +37,7 @@ const AddToCollectionButton = ({
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [isSaved, setIsSaved] = useState(initialSaved);
+  const [showConnect, setShowConnect] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -97,6 +102,13 @@ const AddToCollectionButton = ({
       fetchCollections();
     }
   }, [open, user?.id, fetchCollections]);
+
+  // Close connect modal once user is authenticated
+  useEffect(() => {
+    if (showConnect && user) {
+      setShowConnect(false);
+    }
+  }, [showConnect, user]);
 
   const handleAddToCollection = async (collectionId: string, collectionName: string) => {
     try {
@@ -168,19 +180,33 @@ const AddToCollectionButton = ({
 
   if (!user) {
     return (
-      <Button
-        variant="ghost"
-        size={size}
-        onClick={() => toast({
-          title: "Authentication required",
-          description: "Please connect your wallet to save designs to collections.",
-          variant: "destructive"
-        })}
-        className="flex items-center gap-2"
-      >
-        <Bookmark className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />
-        {size !== 'sm' && "Save"}
-      </Button>
+      <>
+        <Button
+          variant="ghost"
+          size={size}
+          onClick={() => setShowConnect(true)}
+          className="flex items-center gap-2"
+        >
+          <Bookmark className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />
+          {size !== 'sm' && "Save"}
+        </Button>
+
+        <Dialog open={showConnect} onOpenChange={setShowConnect}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Sign in to continue</DialogTitle>
+            </DialogHeader>
+            <ConnectEmbed
+              client={client}
+              wallets={wallets}
+              theme="dark"
+              termsOfServiceUrl="/terms"
+              privacyPolicyUrl="/privacy"
+              showThirdwebBranding={false}
+            />
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 

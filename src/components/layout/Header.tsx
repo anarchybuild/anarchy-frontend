@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, LogOut, User, MoreHorizontal, Expand } from 'lucide-react';
+import { Menu, X, LogOut, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useActiveAccount, useDisconnect, useActiveWallet } from 'thirdweb/react';
 import WalletButton from '@/components/wallet/WalletButton';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { createWalletProfile } from '@/services/profileService';
 
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { HeaderPromptInput } from './HeaderPromptInput';
+
 import ProfileButton from './ProfileButton';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
   const navigate = useNavigate();
   const {
     toast
@@ -91,16 +93,18 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/lovable-uploads/44ffd637-b0c5-43d7-bf14-69f7a3cc2e7a.png" alt="Logo" className="h-8 w-8" />
+            <img src="/lovable-uploads/0df3c4b8-8840-476a-a8ec-c508d91c75ca.png" alt="Anarchy Logo" className="h-8 w-auto" />
           </Link>
         </div>
 
-        {/* Navigation - Always visible */}
-        <nav className="flex items-center justify-center gap-2 flex-1 mx-auto max-w-lg">
-          <HeaderPromptInput />
-        </nav>
-
         <div className="flex items-center gap-2">
+          <Button variant="outline" asChild className="hidden md:flex">
+            <Link to="/">Explore</Link>
+          </Button>
+          <Button variant="outline" asChild className="hidden md:flex">
+            <Link to="/remix">Remix</Link>
+          </Button>
+          
           {/* Wallet button outside dropdown for proper modal handling */}
           {!isConnected && (
             <div className="hidden md:block">
@@ -110,9 +114,7 @@ const Header = () => {
           
           {isConnected ? (
             <>
-              <div className="hidden md:block">
-                <ProfileButton />
-              </div>
+              <ProfileButton />
               <NotificationBell />
             </>
           ) : null}
@@ -125,21 +127,6 @@ const Header = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem asChild>
-                <Link to="/settings" className="w-full">
-                  Settings and Privacy
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/feeds" className="w-full">
-                  Feeds
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/profile?tab=collections" className="w-full">
-                  Collections
-                </Link>
-              </DropdownMenuItem>
               {isConnected && (
                 <DropdownMenuItem onClick={handleSignOut} disabled={isLoading}>
                   <LogOut className="h-4 w-4 mr-2" />
@@ -164,12 +151,12 @@ const Header = () => {
                 Explore
               </Link>
             </Button>
-            {isConnected ? <>
-                <div onClick={() => setIsMenuOpen(false)} className="w-full">
-                  <ProfileButton />
-                </div>
-                <WalletButton className="mt-2" />
-              </> : <WalletButton className="mt-2" />}
+            <Button variant="outline" asChild className="justify-center" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/remix">
+                Remix
+              </Link>
+            </Button>
+            <WalletButton className="mt-2" />
           </div>
         </div>}
     </header>;

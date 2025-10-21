@@ -7,6 +7,7 @@ import { ThirdwebProvider } from "thirdweb/react";
 import { Suspense, lazy } from "react";
 import Layout from "./components/layout/Layout";
 import { PageLoader } from "@/components/common/PageLoader";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 // Lazy load all page components for better code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -21,6 +22,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const ContactUs = lazy(() => import("./pages/ContactUs"));
 const SettingsAndPrivacy = lazy(() => import("./pages/SettingsAndPrivacy"));
 const Feeds = lazy(() => import("./pages/Feeds"));
+const StyleFusion = lazy(() => import("./pages/StyleFusion"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -31,77 +33,84 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={
-                <Suspense fallback={<PageLoader />}>
-                  <Index />
-                </Suspense>
-              } />
-              <Route path="/create" element={
-                <Suspense fallback={<PageLoader />}>
-                  <Create />
-                </Suspense>
-              } />
-              <Route path="/nft/:id" element={
-                <Suspense fallback={<PageLoader />}>
-                  <NFTDetail />
-                </Suspense>
-              } />
-              <Route path="/profile" element={
-                <Suspense fallback={<PageLoader />}>
-                  <Profile />
-                </Suspense>
-              } />
-              <Route path="/collection/:collectionId" element={
-                <Suspense fallback={<PageLoader />}>
-                  <Collection />
-                </Suspense>
-              } />
-              <Route path="/user/:username" element={
-                <Suspense fallback={<PageLoader />}>
-                  <PublicProfile />
-                </Suspense>
-              } />
-              <Route path="/set-username" element={
-                <Suspense fallback={<PageLoader />}>
-                  <SetUsername />
-                </Suspense>
-              } />
-              <Route path="/terms" element={
-                <Suspense fallback={<PageLoader />}>
-                  <TermsOfUse />
-                </Suspense>
-              } />
-              <Route path="/privacy" element={
-                <Suspense fallback={<PageLoader />}>
-                  <Privacy />
-                </Suspense>
-              } />
-              <Route path="/settings" element={
-                <Suspense fallback={<PageLoader />}>
-                  <SettingsAndPrivacy />
-                </Suspense>
-              } />
-              <Route path="/feeds" element={
-                <Suspense fallback={<PageLoader />}>
-                  <Feeds />
-                </Suspense>
-              } />
-              <Route path="/contact" element={
-                <Suspense fallback={<PageLoader />}>
-                  <ContactUs />
-                </Suspense>
-              } />
-              <Route path="*" element={
-                <Suspense fallback={<PageLoader />}>
-                  <NotFound />
-                </Suspense>
-              } />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+          <ErrorBoundary>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={
+                    <Suspense fallback={<PageLoader />}>
+                      <Index />
+                    </Suspense>
+                  } />
+                  <Route path="/create" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <Create />
+                    </Suspense>
+                  } />
+                  <Route path="/nft/:id" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <NFTDetail />
+                    </Suspense>
+                  } />
+                  <Route path="/profile" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <Profile />
+                    </Suspense>
+                  } />
+                  <Route path="/collection/:collectionId" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <Collection />
+                    </Suspense>
+                  } />
+                  <Route path="/user/:username" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PublicProfile />
+                    </Suspense>
+                  } />
+                  <Route path="/set-username" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <SetUsername />
+                    </Suspense>
+                  } />
+                  <Route path="/terms" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <TermsOfUse />
+                    </Suspense>
+                  } />
+                  <Route path="/privacy" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <Privacy />
+                    </Suspense>
+                  } />
+                  <Route path="/settings" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <SettingsAndPrivacy />
+                    </Suspense>
+                  } />
+                  <Route path="/feeds" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <Feeds />
+                    </Suspense>
+                  } />
+                  <Route path="/contact" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <ContactUs />
+                    </Suspense>
+                  } />
+                  <Route path="/remix" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <StyleFusion />
+                    </Suspense>
+                  } />
+                  <Route path="*" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <NotFound />
+                    </Suspense>
+                  } />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </ErrorBoundary>
       </TooltipProvider>
     </ThirdwebProvider>
   </QueryClientProvider>

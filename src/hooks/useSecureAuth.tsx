@@ -165,7 +165,7 @@ export const useSecureAuth = () => {
     };
 
     handleWalletAuth();
-  }, [account, user?.isSupabaseUser]);
+  }, [account?.address, user?.isSupabaseUser]);
 
   // Priority: Supabase auth first, then authenticated wallet connection
   const finalUser = useMemo(() => {
@@ -191,14 +191,6 @@ export const useSecureAuth = () => {
     
     return true;
   };
-
-  console.log('useSecureAuth state:', { 
-    isSignedIn, 
-    userId: finalUser?.id, 
-    accountAddress: account?.address,
-    hasSupabaseUser: finalUser?.isSupabaseUser,
-    hasValidWalletAuth: finalUser?.isWalletUser
-  });
 
   return { 
     isSignedIn, 

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
-import OptimizedNFTGrid from '@/components/nft/OptimizedNFTGrid';
+import FastImageGrid from '@/components/nft/FastImageGrid';
 import { useDesigns } from '@/hooks/useQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useQuery';
@@ -15,6 +15,9 @@ import { useSecureAuth } from '@/hooks/useSecureAuth';
 import { useNFTMinting } from '@/hooks/useNFTMinting';
 import { createDesign } from '@/services/designService';
 import { preloadCriticalImages } from '@/utils/imagePreloader';
+import { FloatingPromptBox } from '@/components/layout/FloatingPromptBox';
+import WalletButton from '@/components/wallet/WalletButton';
+import anarchyLogo from '@/assets/anarchy-logo.svg';
 const Index = () => {
   const [prompt, setPrompt] = useState('');
   const [formData, setFormData] = useState({
@@ -22,6 +25,7 @@ const Index = () => {
     description: ''
   });
   const [generating, setGenerating] = useState(false);
+  const [showExplore, setShowExplore] = useState(false);
   const {
     user
   } = useAuth();
@@ -30,34 +34,51 @@ const Index = () => {
   } = useToast();
   const {
     isSignedIn,
-    account
+    account,
+    loading
   } = useSecureAuth();
   const {
     mintNFT
   } = useNFTMinting();
 
-  // Get the profile to use the correct user ID for wallet users
+  // Stabilize wallet detection to prevent re-renders
+  const isWalletUser = useMemo(() => user?.id?.startsWith('0x'), [user?.id]);
+
+  // Get the profile to use the correct user ID for wallet users (background loading)
   const {
     data: profile,
     isLoading: profileLoading
-  } = useProfile(user?.id?.startsWith('0x') ? user.id : undefined);
-  const effectiveUserId = user?.id?.startsWith('0x') ? profile?.id : user?.id;
+  } = useProfile(isWalletUser ? user.id : undefined);
 
-  // For wallet users, wait until profile is loaded before fetching designs with user context
-  const shouldFetchWithUser = user?.id?.startsWith('0x') ? !profileLoading && profile?.id : true;
+  // Memoize effective user ID to prevent cascading re-renders
+  const effectiveUserId = useMemo(() => {
+    if (!user?.id) return undefined;
+    return isWalletUser ? profile?.id : user?.id;
+  }, [user?.id, isWalletUser, profile?.id]);
 
-  // Use optimized infinite query
+  // Determine if we should use authenticated query (only when user is fully loaded)
+  const shouldUseAuthenticated = useMemo(() => {
+    if (!user?.id) return false;
+    // For wallet users, wait for profile to load
+    if (isWalletUser && profileLoading) return false;
+    // For wallet users, need profile ID
+    if (isWalletUser && !profile?.id) return false;
+    return true;
+  }, [user?.id, isWalletUser, profileLoading, profile?.id]);
+
+  // Use single unified hook - either authenticated or public
+  const queryUserId = shouldUseAuthenticated ? effectiveUserId : undefined;
   const {
     data,
-    isLoading: loading,
+    isLoading,
     error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
-  } = useDesigns(shouldFetchWithUser ? effectiveUserId : undefined);
-  
+  } = useDesigns(queryUserId);
+
   // Flatten pages into single array
-  const nfts = data?.pages.flat() || [];
+  const nfts = useMemo(() => data?.pages.flat() || [], [data]);
   if (error) {
     console.error('Error loading designs:', error);
   }
@@ -65,13 +86,17 @@ const Index = () => {
   // Preload critical images when NFTs are first loaded
   useEffect(() => {
     if (nfts.length > 0) {
-      const criticalImageUrls = nfts.slice(0, 2).map(nft => 
-        nft.seriesImages && nft.seriesImages.length > 0 
-          ? nft.seriesImages[0] 
-          : nft.imageUrl
-      ).filter(Boolean);
-      
-      preloadCriticalImages(criticalImageUrls, 2);
+      const criticalImageUrls = nfts.slice(0, 6).map(nft => {
+        // Try thumbnail first, then medium, then main image
+        if (nft.thumbnailUrl || (nft as any).thumbnail_url) {
+          return nft.thumbnailUrl || (nft as any).thumbnail_url;
+        }
+        if (nft.mediumUrl || (nft as any).medium_url) {
+          return nft.mediumUrl || (nft as any).medium_url;
+        }
+        return nft.seriesImages && nft.seriesImages.length > 0 ? nft.seriesImages[0] : nft.imageUrl;
+      }).filter(Boolean);
+      preloadCriticalImages(criticalImageUrls, 6);
     }
   }, [nfts.length > 0]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -146,7 +171,6 @@ const Index = () => {
           });
 
           // Reset form
-          setPrompt('');
           setFormData({
             name: '',
             description: ''
@@ -168,20 +192,31 @@ const Index = () => {
       setGenerating(false);
     }
   };
-  return <div className="min-h-screen">
-      
+  // Show landing page for non-authenticated users
+  if (!loading && !isSignedIn && !showExplore) {
+    return <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-8 max-w-2xl mx-auto px-4">
+          <img src={anarchyLogo} alt="Anarchy Logo" className="mx-auto h-12 w-auto" />
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground">Create unlimited AI images, for free</h1>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <WalletButton />
+            <Button variant="outline" size="lg" onClick={() => {
+            console.log('Explore button clicked, setting showExplore to true');
+            setShowExplore(true);
+          }}>
+              Explore
+            </Button>
+          </div>
+        </div>
+      </div>;
+  }
 
-      {loading && nfts.length === 0 ? (
-        <NFTGridSkeleton />
-      ) : (
-        <OptimizedNFTGrid 
-          nfts={nfts} 
-          loading={loading}
-          hasNextPage={hasNextPage}
-          fetchNextPage={fetchNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-        />
-      )}
+  // Show explore feed (for both signed in users and non-signed in users who clicked explore)
+  return <div className="min-h-screen relative">
+      <FastImageGrid nfts={nfts} loading={isLoading} hasNextPage={hasNextPage} fetchNextPage={fetchNextPage} isFetchingNextPage={isFetchingNextPage} />
+      
+      {isSignedIn && <FloatingPromptBox />}
     </div>;
 };
 export default Index;

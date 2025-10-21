@@ -3,3 +3,7 @@ project_id = "kzkdzvavqjdtomeqwlxn"
 # Make gasless-mint function public for wallet users
 [functions.gasless-mint]
 verify_jwt = false
+
+# Make generate-styled-image function public for StyleFusion page
+[functions.generate-styled-image]
+verify_jwt = false

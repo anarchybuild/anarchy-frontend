@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useActiveAccount } from 'thirdweb/react';
 import { createDesign } from '@/services/designService';
 import { useNFTMinting } from '@/hooks/useNFTMinting';
+import { uploadGeneratedImages } from '@/services/generatedImageService';
 
 interface UseImageGenerationOptions {
   model?: string;
@@ -47,7 +48,7 @@ export const useImageGeneration = () => {
 
     if (!account) {
       toast({
-        title: "Wallet not connected",
+        title: "Sign in to generate",
         description: "Please connect your wallet to generate images.",
         variant: "destructive"
       });
@@ -68,8 +69,8 @@ export const useImageGeneration = () => {
     try {
       console.log("📸 Generating image with prompt:", prompt);
       
-      // Generate the image
-      const response = await fetch('https://kzkdzvavqjdtomeqwlxn.supabase.co/functions/v1/generate-image', {
+      // Generate the image with optimized sizes
+      const response = await fetch('https://kzkdzvavqjdtomeqwlxn.supabase.co/functions/v1/generate-optimized-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,18 +88,40 @@ export const useImageGeneration = () => {
       console.log("📸 Image generation response:", { success: data.success, hasImageUrl: !!data.imageUrl, error: data.error });
       
       if (data.success && data.imageUrl) {
-        console.log("✅ Image generated successfully:", data.imageUrl);
+        console.log("✅ Image generated successfully, processing optimized sizes...");
         
-        // Create design
+        // Process image sizes for optimization
+        const { processImageSizes } = await import('@/services/imageOptimizationService');
+        const processedImages = await processImageSizes(data.imageUrl);
+        
+        console.log('📸 Image sizes processed:', {
+          originalSize: `${Math.round(processedImages.original.length / 1024)}kb`,
+          thumbnailSize: `${Math.round(processedImages.thumbnail.length / 1024)}kb`,
+          mediumSize: `${Math.round(processedImages.medium.length / 1024)}kb`
+        });
+
+        // Upload images to Supabase Storage
+        console.log('☁️ Uploading images to storage...');
         const designName = name?.trim() || 'Generated Design';
         const designDescription = description?.trim() || prompt.trim();
+        const imageName = `${designName.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}`;
         
-        console.log("💾 Creating design with data:", { name: designName, description: designDescription, imageUrl: data.imageUrl });
+        const uploadResult = await uploadGeneratedImages(
+          processedImages.original,
+          processedImages.thumbnail,
+          processedImages.medium,
+          account.address,
+          imageName
+        );
+
+        console.log("💾 Creating design with storage URLs...");
 
         const designData = {
           name: designName,
           description: designDescription,
-          image_url: data.imageUrl,
+          image_url: uploadResult.originalUrl,
+          thumbnail_url: uploadResult.thumbnailUrl,
+          medium_url: uploadResult.mediumUrl,
           price: null,
           license: null,
           private: isPrivate,
@@ -133,14 +156,10 @@ export const useImageGeneration = () => {
           
           console.log("✅ NFT minted successfully:", mintResult);
           
-          toast({
-            title: "Success!",
-            description: "Image generated, design created, and NFT minted successfully!"
-          });
 
           return {
             success: true,
-            imageUrl: data.imageUrl,
+            imageUrl: uploadResult.originalUrl, // Return storage URL instead of data URL
             design: createdDesign,
             nft: mintResult
           };
@@ -154,7 +173,7 @@ export const useImageGeneration = () => {
           
           return {
             success: false,
-            imageUrl: data.imageUrl,
+            imageUrl: uploadResult.originalUrl, // Return storage URL instead of data URL
             error: mintError
           };
         }

@@ -60,11 +60,17 @@ export const useProfileById = (id: string | undefined) => {
   });
 };
 
-// Design hooks with infinite scrolling
+// Design hooks with infinite scrolling - handles both public and authenticated
 export const useDesigns = (userId?: string) => {
+  // Use a unified cache key that distinguishes between public (no userId) and user-specific data
+  const queryKey = userId ? QUERY_KEYS.designs(userId) : ['designs', 'public'];
+  
   return useInfiniteQuery({
-    queryKey: QUERY_KEYS.designs(userId),
-    queryFn: ({ pageParam = 0 }) => fetchDesigns({ userId, limit: 20, offset: pageParam }),
+    queryKey,
+    queryFn: ({ pageParam = 0 }) => {
+      console.log('🚀 [useDesigns] Fetching designs, userId:', userId, 'offset:', pageParam, 'timestamp:', Date.now());
+      return fetchDesigns({ userId, limit: 20, offset: pageParam });
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       // If the last page has fewer than 20 items, we've reached the end

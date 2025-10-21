@@ -47,14 +47,6 @@ export const useAuth = () => {
     return user || (account && !user ? { id: account.address, email: account.address } : null);
   }, [user, account]);
 
-  console.log('useAuth state:', { 
-    isSignedIn, 
-    isConnected, 
-    finalIsSignedIn, 
-    userId: finalUser?.id, 
-    accountAddress: account?.address,
-    hasSupabaseUser: !!user
-  });
 
   return { 
     isSignedIn: finalIsSignedIn, 

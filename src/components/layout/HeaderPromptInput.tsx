@@ -5,7 +5,7 @@ import { Wand2, Loader2, Expand } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useImageGeneration } from '@/hooks/useImageGeneration';
 
-export const HeaderPromptInput = () => {
+export const HeaderPromptInput = ({ onGenerated }: { onGenerated?: (result: { imageUrl: string; design?: any; nft?: any; prompt: string }) => void }) => {
   const [prompt, setPrompt] = useState('');
   const { generateAndMint, generating } = useImageGeneration();
 
@@ -23,10 +23,11 @@ export const HeaderPromptInput = () => {
       }
     });
 
-    if (result?.success) {
-      // Clear the prompt on success
-      setPrompt('');
+    if (result && result.imageUrl) {
+      onGenerated?.({ imageUrl: result.imageUrl, design: result.design, nft: result.nft, prompt });
     }
+
+    // Keep prompt for re-use after successful generation
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

@@ -19,6 +19,8 @@ export const createDesign = async (designData: {
   name: string;
   description: string;
   image_url?: string;
+  thumbnail_url?: string;
+  medium_url?: string;
   price?: number;
   license?: string;
   private?: boolean;
@@ -64,6 +66,8 @@ export const createDesign = async (designData: {
     name: designData.name.trim(),
     description: designData.description.trim(),
     image_url: designData.image_url || null,
+    thumbnail_url: designData.thumbnail_url || null,
+    medium_url: designData.medium_url || null,
     price: designData.price || null,
     license: designData.license || null,
     private: designData.private || false,
@@ -102,10 +106,10 @@ interface FetchDesignsOptions {
 export const fetchDesigns = async (options: FetchDesignsOptions = {}): Promise<NFT[]> => {
   const { userId, limit = 20, offset = 0 } = options;
   
-  // Fetch only from designs table with pagination
+  // Fetch designs with thumbnail and medium URLs for optimization
   const { data: designs, error: designsError } = await supabase
     .from('designs')
-    .select('*')
+    .select('*, thumbnail_url, medium_url')
     .eq('private', false)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -226,6 +230,8 @@ export const fetchDesigns = async (options: FetchDesignsOptions = {}): Promise<N
       name: design.name,
       description: design.description || '',
       imageUrl: design.image_url || seriesImages[0] || '/placeholder.svg',
+      thumbnailUrl: design.thumbnail_url,
+      mediumUrl: design.medium_url,
       creator: profile?.username || design.user_id,
       owner: profile?.username || design.user_id,
       price: design.price ? design.price.toString() : '0',

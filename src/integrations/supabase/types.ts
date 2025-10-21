@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -154,10 +154,12 @@ export type Database = {
           id: string
           image_url: string | null
           license: string | null
+          medium_url: string | null
           name: string
           price: number | null
           private: boolean
           series_id: string | null
+          thumbnail_url: string | null
           updated_at: string
           user_id: string
         }
@@ -167,10 +169,12 @@ export type Database = {
           id?: string
           image_url?: string | null
           license?: string | null
+          medium_url?: string | null
           name: string
           price?: number | null
           private?: boolean
           series_id?: string | null
+          thumbnail_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -180,10 +184,12 @@ export type Database = {
           id?: string
           image_url?: string | null
           license?: string | null
+          medium_url?: string | null
           name?: string
           price?: number | null
           private?: boolean
           series_id?: string | null
+          thumbnail_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -193,6 +199,13 @@ export type Database = {
             columns: ["series_id"]
             isOneToOne: false
             referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_designs_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -353,6 +366,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       series: {
         Row: {
           created_at: string
@@ -460,10 +506,76 @@ export type Database = {
         Args: { profile_user_id: string }
         Returns: boolean
       }
+      get_profile_by_username: {
+        Args: { username_param: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          description: string
+          display_name: string
+          github_url: string
+          id: string
+          instagram_url: string
+          linkedin_url: string
+          location: string
+          twitter_url: string
+          username: string
+          wallet_address: string
+          website: string
+        }[]
+      }
+      get_public_profile_data: {
+        Args: { profile_username: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          description: string
+          display_name: string
+          github_url: string
+          id: string
+          instagram_url: string
+          linkedin_url: string
+          location: string
+          twitter_url: string
+          username: string
+          website: string
+        }[]
+      }
+      get_public_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string
+          created_at: string
+          description: string
+          display_name: string
+          github_url: string
+          id: string
+          instagram_url: string
+          linkedin_url: string
+          location: string
+          name: string
+          twitter_url: string
+          updated_at: string
+          username: string
+          username_set: boolean
+          website: string
+        }[]
+      }
+      get_safe_public_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string
+          created_at: string
+          description: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -473,6 +585,43 @@ export type Database = {
       }
       is_valid_wallet_user: {
         Args: { check_user_id: string }
+        Returns: boolean
+      }
+      is_wallet_profile: {
+        Args: { profile_id: string }
+        Returns: boolean
+      }
+      log_profile_access: {
+        Args: { access_type?: string; accessed_profile_id: string }
+        Returns: undefined
+      }
+      safe_create_wallet_profile: {
+        Args: { profile_username?: string; wallet_addr: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          username: string
+          username_set: boolean
+          wallet_address: string
+        }[]
+      }
+      safe_get_profile_by_wallet: {
+        Args: { wallet_addr: string }
+        Returns: {
+          avatar_url: string
+          description: string
+          display_name: string
+          id: string
+          location: string
+          username: string
+          username_set: boolean
+          wallet_address: string
+          website: string
+        }[]
+      }
+      safe_validate_storage_access: {
+        Args: { bucket_name: string; profile_id: string }
         Returns: boolean
       }
       sanitize_html_content: {

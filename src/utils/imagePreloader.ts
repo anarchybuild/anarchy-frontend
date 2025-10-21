@@ -1,6 +1,19 @@
+// Check if a string is base64 data
+const isBase64Image = (url: string): boolean => {
+  return url.startsWith('data:image/');
+};
+
 export const preloadCriticalImages = (imageUrls: string[], maxPreload = 2) => {
   imageUrls.slice(0, maxPreload).forEach((url) => {
     if (url && url !== '/placeholder.svg') {
+      // For base64 images, create a temporary image to load them into memory
+      if (isBase64Image(url)) {
+        const img = new Image();
+        img.src = url;
+        return;
+      }
+      
+      // For regular URLs, use link preload
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';

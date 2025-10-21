@@ -15,7 +15,7 @@ const Footer = () => {
             Privacy
           </Link>
           <Link to="/terms" className="text-xs text-muted-foreground hover:text-primary/80 transition-colors">
-            Terms of Use
+            Terms & Conditions
           </Link>
           <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary/80 transition-colors">Contact Us</Link>
         </div>
